@@ -166,20 +166,35 @@ class SimpleMCPClient:
             return None
     
     async def _read_response(self) -> Optional[str]:
-        """从stdout读取一行响应"""
+        """从stdout读取一行响应（优化版本，使用asyncio streams）"""
         if not self.process:
             return None
         
-        loop = asyncio.get_event_loop()
-        
-        # 在executor中读取,避免阻塞
-        def read_line():
-            try:
-                return self.process.stdout.readline().decode('utf-8', errors='ignore').strip()
-            except:
-                return None
-        
-        return await loop.run_in_executor(None, read_line)
+        try:
+            # Use asyncio.create_subprocess_exec for truly async I/O in future
+            # For now, run blocking I/O in thread pool executor but with timeout
+            loop = asyncio.get_event_loop()
+            
+            def read_line():
+                try:
+                    # Read with a small buffer to avoid excessive memory usage
+                    line = self.process.stdout.readline()
+                    if line:
+                        return line.decode('utf-8', errors='ignore').strip()
+                    return None
+                except Exception:
+                    return None
+            
+            # Add timeout to prevent indefinite blocking
+            return await asyncio.wait_for(
+                loop.run_in_executor(None, read_line),
+                timeout=30.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"{self.name}: Read response timeout")
+            return None
+        except Exception:
+            return None
     
     def _next_id(self) -> int:
         """生成下一个请求ID"""
@@ -297,34 +312,43 @@ class SimpleMCPAggregator:
             return False
     
     def get_all_tools(self) -> List[Dict[str, Any]]:
-        """获取所有工具（支持stdio和HTTP两种方式）"""
+        """获取所有工具（优化版本，减少循环和字符串操作）"""
         all_tools = []
+        
+        # Pre-compute server prefix for faster lookups
         for server_name, client in self.clients.items():
             client_type = self.client_types.get(server_name, "stdio")
+            server_prefix = f"{server_name}_"
             
             if client_type == "http":
-                # HTTP客户端需要通过API获取工具列表
-                # 这里只返回已注册的工具名称
-                for namespaced_name, srv_name in self.tool_registry.items():
-                    if srv_name == server_name:
-                        original_name = namespaced_name.replace(f"{server_name}_", "", 1)
-                        all_tools.append({
-                            "server": server_name,
-                            "name": namespaced_name,
-                            "original_name": original_name,
-                            "description": f"HTTP MCP工具: {original_name}",
-                            "inputSchema": {}
-                        })
-            else:
-                # stdio客户端直接从tools列表获取
-                for tool in client.tools:
-                    all_tools.append({
+                # HTTP客户端：只处理属于此服务器的工具
+                # Use list comprehension for better performance
+                http_tools = [
+                    {
                         "server": server_name,
-                        "name": f"{server_name}_{tool.get('name', '')}",
+                        "name": namespaced_name,
+                        "original_name": namespaced_name[len(server_prefix):],  # Faster than replace
+                        "description": f"HTTP MCP工具: {namespaced_name[len(server_prefix):]}",
+                        "inputSchema": {}
+                    }
+                    for namespaced_name, srv_name in self.tool_registry.items()
+                    if srv_name == server_name
+                ]
+                all_tools.extend(http_tools)
+            else:
+                # stdio客户端：直接从tools列表获取（使用列表推导提升性能）
+                stdio_tools = [
+                    {
+                        "server": server_name,
+                        "name": f"{server_prefix}{tool.get('name', '')}",
                         "original_name": tool.get("name", ""),
                         "description": tool.get("description", ""),
                         "inputSchema": tool.get("inputSchema", {})
-                    })
+                    }
+                    for tool in client.tools
+                ]
+                all_tools.extend(stdio_tools)
+        
         return all_tools
     
     async def call_tool(self, namespaced_name: str, arguments: Dict[str, Any]) -> Optional[Dict[str, Any]]:

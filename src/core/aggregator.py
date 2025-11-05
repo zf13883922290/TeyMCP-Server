@@ -256,16 +256,20 @@ class MCPAggregator:
         return True
     
     async def list_tools(self) -> List[Dict[str, Any]]:
-        """列出所有可用工具"""
-        tools = []
-        for tool_name, server_name in self.tool_registry.items():
-            status = self.server_status.get(server_name, {})
-            tools.append({
+        """列出所有可用工具（优化版本，使用列表推导）"""
+        # Use list comprehension for better performance
+        return [
+            {
                 "name": tool_name,
                 "server": server_name,
-                "status": status.status if isinstance(status, ServerStatus) else "unknown"
-            })
-        return tools
+                "status": (
+                    self.server_status[server_name].status 
+                    if server_name in self.server_status and isinstance(self.server_status[server_name], ServerStatus)
+                    else "unknown"
+                )
+            }
+            for tool_name, server_name in self.tool_registry.items()
+        ]
     
     async def call_tool(
         self,

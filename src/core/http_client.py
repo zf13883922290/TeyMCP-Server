@@ -39,10 +39,17 @@ class HTTPMCPClient:
         self.url = url.rstrip('/')
         self.headers = headers or {}
         self.timeout = timeout
+        # Use connection pooling with limits for better performance
         self.client = httpx.AsyncClient(
             headers=self.headers,
             timeout=timeout,
-            follow_redirects=True
+            follow_redirects=True,
+            limits=httpx.Limits(
+                max_keepalive_connections=20,
+                max_connections=100,
+                keepalive_expiry=30.0
+            ),
+            http2=True  # Enable HTTP/2 for better performance
         )
         self._request_id = 0
         

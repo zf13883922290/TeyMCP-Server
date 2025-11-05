@@ -1,16 +1,17 @@
 """
-指标收集工具
-用于收集和统计系统性能指标
+指标收集工具（优化版本）
+用于收集和统计系统性能指标，使用高效的数据结构
 """
 
 from typing import Dict, Any, List
 from datetime import datetime
 import json
 from pathlib import Path
+from collections import deque
 
 
 class MetricsCollector:
-    """指标收集器"""
+    """指标收集器（优化版本，使用 deque 提升性能）"""
     
     def __init__(self):
         self.metrics: Dict[str, Any] = {
@@ -19,7 +20,7 @@ class MetricsCollector:
                 "success": 0,
                 "failed": 0
             },
-            "response_times": [],
+            "response_times": deque(maxlen=1000),  # Use deque for O(1) append/pop
             "servers": {},
             "tools": {}
         }
@@ -30,7 +31,7 @@ class MetricsCollector:
     
     def record_request(self, success: bool, duration_ms: int):
         """
-        记录请求
+        记录请求（优化版本，使用 deque 自动管理大小）
         
         Args:
             success: 是否成功
@@ -43,10 +44,8 @@ class MetricsCollector:
         else:
             self.metrics["requests"]["failed"] += 1
         
-        # 记录响应时间（只保留最近1000条）
+        # deque with maxlen automatically removes oldest items when full
         self.metrics["response_times"].append(duration_ms)
-        if len(self.metrics["response_times"]) > 1000:
-            self.metrics["response_times"] = self.metrics["response_times"][-1000:]
     
     def record_server_call(self, server_name: str, success: bool):
         """
@@ -93,9 +92,12 @@ class MetricsCollector:
             self.metrics["tools"][tool_name]["failed"] += 1
     
     def get_metrics(self) -> Dict[str, Any]:
-        """获取当前指标"""
+        """获取当前指标（转换 deque 为 list 以便 JSON 序列化）"""
         return {
-            **self.metrics,
+            "requests": self.metrics["requests"],
+            "response_times": list(self.metrics["response_times"]),  # Convert deque to list
+            "servers": self.metrics["servers"],
+            "tools": self.metrics["tools"],
             "avg_response_time": self._calculate_avg_response_time(),
             "success_rate": self._calculate_success_rate()
         }
