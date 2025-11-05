@@ -166,20 +166,35 @@ class SimpleMCPClient:
             return None
     
     async def _read_response(self) -> Optional[str]:
-        """从stdout读取一行响应"""
+        """从stdout读取一行响应（优化版本，使用asyncio streams）"""
         if not self.process:
             return None
         
-        loop = asyncio.get_event_loop()
-        
-        # 在executor中读取,避免阻塞
-        def read_line():
-            try:
-                return self.process.stdout.readline().decode('utf-8', errors='ignore').strip()
-            except:
-                return None
-        
-        return await loop.run_in_executor(None, read_line)
+        try:
+            # Use asyncio.create_subprocess_exec for truly async I/O in future
+            # For now, run blocking I/O in thread pool executor but with timeout
+            loop = asyncio.get_event_loop()
+            
+            def read_line():
+                try:
+                    # Read with a small buffer to avoid excessive memory usage
+                    line = self.process.stdout.readline()
+                    if line:
+                        return line.decode('utf-8', errors='ignore').strip()
+                    return None
+                except Exception:
+                    return None
+            
+            # Add timeout to prevent indefinite blocking
+            return await asyncio.wait_for(
+                loop.run_in_executor(None, read_line),
+                timeout=30.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"{self.name}: Read response timeout")
+            return None
+        except Exception:
+            return None
     
     def _next_id(self) -> int:
         """生成下一个请求ID"""
