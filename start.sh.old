@@ -1,0 +1,147 @@
+#!/bin/bash
+# TeyMCP-Server 快速启动脚本 - 固定端口1215
+# Author: zf13883922290
+# GitHub: https://github.com/zf13883922290/TeyMCP-Server
+
+cd /home/sun/TeyMCP-Server || exit 1
+
+# 显示Logo和项目信息
+clear
+echo ""
+echo "  _____         __  __  ____ ____  "
+echo " |_   _|__ _   _|  \/  |/ ___|  _ \ "
+echo "   | |/ _ \ | | | |\/| | |   | |_) |"
+echo "   | |  __/ |_| | |  | | |___|  __/ "
+echo "   |_|\___|\__, |_|  |_|\____|_|    "
+echo "           |___/                     "
+echo "    ____                            "
+echo "   / ___|  ___ _ ____   _____ _ __  "
+echo "   \___ \ / _ \ '__\ \ / / _ \ '__| "
+echo "    ___) |  __/ |   \ V /  __/ |    "
+echo "   |____/ \___|_|    \_/ \___|_|    "
+echo ""
+echo "  🌟 The One MCP to Rule Them All 🌟"
+echo ""
+echo "  📦 Version: 2.0"
+echo "  👤 Author: zf13883922290"
+echo "  🔗 GitHub: https://github.com/zf13883922290/TeyMCP-Server"
+echo "  📚 Docs: https://github.com/zf13883922290/TeyMCP-Server/wiki"
+echo ""
+echo "=========================================="
+echo ""
+
+# 1. 杀死旧进程
+echo "🔍 步骤1: 清理旧进程..."
+pkill -9 -f "python.*src/main.py" 2>/dev/null && echo "   ✅ 已停止旧服务器" || echo "   ℹ️  没有运行中的服务器"
+
+# 2. 启动新服务器
+echo ""
+echo "🚀 步骤2: 启动服务器..."
+source venv/bin/activate
+nohup python src/main.py > /tmp/teymcp_startup.log 2>&1 &
+SERVER_PID=$!
+echo $SERVER_PID > /tmp/teymcp.pid
+
+# 3. 等待启动
+echo ""
+echo "⏳ 步骤3: 等待服务器初始化..."
+sleep 3
+
+# 显示启动状态
+if ps -p $SERVER_PID > /dev/null 2>&1; then
+    echo ""
+    echo "=========================================="
+    echo "        ✅ TeyMCP-Server 启动成功!"
+    echo "=========================================="
+    echo ""
+    echo "📊 运行信息:"
+    echo "   • 进程ID: $SERVER_PID"
+    echo "   • 监听端口: 1215"
+    echo "   • 防火墙: ✅ 已开启"
+    echo ""
+    echo "⏳ 正在初始化MCP服务器(12秒)..."
+    sleep 12
+    echo ""
+    echo "=========================================="
+    echo "          📊 MCP服务器加载状态"
+    echo "=========================================="
+    echo ""
+    
+    # 提取加载统计信息
+    SUCCESS_COUNT=$(tail -10 /tmp/teymcp_startup.log | grep "成功加载" | grep -o "[0-9]\+" | head -1)
+    FAILED_COUNT=$(tail -10 /tmp/teymcp_startup.log | grep "加载失败" | grep -o "[0-9]\+" | head -1)
+    TOOLS_COUNT=$(tail -10 /tmp/teymcp_startup.log | grep "提供工具" | grep -o "[0-9]\+" | head -1)
+    # 提取加载统计信息
+    SUCCESS_COUNT=$(tail -20 /tmp/teymcp_startup.log | grep "成功加载" | sed 's/.*成功加载: \([0-9]\+\).*/\1/')
+    FAILED_COUNT=$(tail -20 /tmp/teymcp_startup.log | grep "加载失败" | sed 's/.*加载失败: \([0-9]\+\).*/\1/')
+    TOOLS_COUNT=$(tail -20 /tmp/teymcp_startup.log | grep "提供工具" | sed 's/.*提供工具: \([0-9]\+\).*/\1/')
+    fi
+    
+    if [ -n "$FAILED_COUNT" ] && [ "$FAILED_COUNT" != "0" ]; then
+        echo "⚠️  加载失败: $FAILED_COUNT 个MCP服务器"
+    fi
+    
+    if [ -n "$TOOLS_COUNT" ]; then
+        echo "🔧 可用工具: $TOOLS_COUNT 个"
+    fi
+    
+    echo ""
+    echo "详细日志: tail -f /tmp/teymcp_startup.log"
+    echo ""
+    echo "=========================================="
+    echo "          📦 社区与支持"
+    echo "=========================================="
+    echo ""
+    echo "🔗 项目资源:"
+    echo "   • GitHub仓库:   https://github.com/zf13883922290/TeyMCP-Server"
+    echo "   • 问题反馈:     https://github.com/zf13883922290/TeyMCP-Server/issues"
+    echo "   • 贡献指南:     https://github.com/zf13883922290/TeyMCP-Server/blob/main/CONTRIBUTING.md"
+    echo "   • 快速开始:     查看 QUICKSTART.md"
+    echo ""
+    echo "📧 联系方式:"
+    echo "   • 作者: zf13883922290"
+    echo "   • 邮箱: (在GitHub Profile查看)"
+    echo ""
+    echo "=========================================="
+    echo "          🌐 访问地址"
+    echo "=========================================="
+    echo ""
+    echo "📱 核心功能:"
+    echo "   🏠 管理面板:    http://localhost:1215"
+    echo "   📚 API文档:     http://localhost:1215/api/docs"
+    echo "   📊 状态监控:    http://localhost:1215/api/status"
+    echo "   📝 日志接口:    http://localhost:1215/api/logs"
+    echo "   🔧 工具列表:    http://localhost:1215/api/tools"
+    echo "   🖥️  服务器列表:  http://localhost:1215/api/servers"
+    echo ""
+    echo "🌐 外部访问 (如果需要):"
+    echo "   替换 localhost 为服务器IP地址"
+    echo "   例如: http://YOUR_IP:1215"
+    echo ""
+    echo "=========================================="
+    echo "          ⚙️  配置与管理"
+    echo "=========================================="
+    echo ""
+    echo "📂 配置文件:"
+    echo "   • 应用配置:     config/app.yaml"
+    echo "   • MCP服务器:    config/servers.yaml"
+    echo "   • 环境变量:     config/.env"
+    echo ""
+    echo "📝 日志文件:"
+    echo "   • 启动日志:     /tmp/teymcp_startup.log"
+    echo "   • 持久日志:     data/logs/teymcp.log"
+    echo ""
+    echo "🛠️  管理命令:"
+    echo "   • 查看状态:     bash service.sh status"
+    echo "   • 实时日志:     bash view_logs.sh"
+    echo "   • 停止服务:     bash service.sh stop"
+    echo "   • 重启服务:     bash service.sh restart"
+    echo ""
+    echo "=========================================="
+    echo "🎉 一切准备就绪! 访问 http://localhost:1215 开始使用"
+    echo "=========================================="
+    echo ""
+else
+    echo "❌ 启动失败! 查看日志: tail -50 /tmp/teymcp_startup.log"
+    exit 1
+fi

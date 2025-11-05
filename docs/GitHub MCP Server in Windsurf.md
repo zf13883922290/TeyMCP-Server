@@ -1,0 +1,86 @@
+Install GitHub MCP Server in Windsurf
+Prerequisites
+Windsurf IDE installed (latest version)
+GitHub Personal Access Token with appropriate scopes
+For local installation: Docker installed and running
+Remote Server Setup (Recommended)
+The remote GitHub MCP server is hosted by GitHub at https://api.githubcopilot.com/mcp/ and supports Streamable HTTP protocol. Windsurf currently supports PAT authentication only.
+
+Streamable HTTP Configuration
+Windsurf supports Streamable HTTP servers with a serverUrl field:
+
+{
+  "mcpServers": {
+    "github": {
+      "serverUrl": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer YOUR_GITHUB_PAT"
+      }
+    }
+  }
+}
+Local Server Setup
+Docker Installation (Required)
+Important: The npm package @modelcontextprotocol/server-github is no longer supported as of April 2025. Use the official Docker image ghcr.io/github/github-mcp-server instead.
+
+{
+  "mcpServers": {
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PAT"
+      }
+    }
+  }
+}
+Installation Steps
+Via Plugin Store
+Open Windsurf and navigate to Cascade
+Click the Plugins icon or hammer icon (🔨)
+Search for "GitHub MCP Server"
+Click Install and enter your PAT when prompted
+Click Refresh (🔄)
+Manual Configuration
+Click the hammer icon (🔨) in Cascade
+Click Configure to open ~/.codeium/windsurf/mcp_config.json
+Add your chosen configuration from above
+Save the file
+Click Refresh (🔄) in the MCP toolbar
+Configuration Details
+File path: ~/.codeium/windsurf/mcp_config.json
+Scope: Global configuration only (no per-project support)
+Format: Must be valid JSON (use a linter to verify)
+Verification
+After installation:
+
+Look for "1 available MCP server" in the MCP toolbar
+Click the hammer icon to see available GitHub tools
+Test with: "List my GitHub repositories"
+Check for green dot next to the server name
+Troubleshooting
+Remote Server Issues
+Authentication failures: Verify PAT has correct scopes and hasn't expired
+Connection errors: Check firewall/proxy settings for HTTPS connections
+Streamable HTTP not working: Ensure you're using the correct serverUrl field format
+Local Server Issues
+Docker errors: Ensure Docker Desktop is running
+Image pull failures: Try docker logout ghcr.io then retry
+Docker not found: Install Docker Desktop and ensure it's running
+General Issues
+Invalid JSON: Validate with jsonlint.com
+Tools not appearing: Restart Windsurf completely
+Check logs: ~/.codeium/windsurf/logs/
+Important Notes
+Official repository: github/github-mcp-server
+Remote server URL: https://api.githubcopilot.com/mcp/
+Docker image: ghcr.io/github/github-mcp-server (official and supported)
+npm package: @modelcontextprotocol/server-github (deprecated as of April 2025 - no longer functional)
+Windsurf limitations: No environment variable interpolation, global config only

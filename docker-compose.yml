@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  teymcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: teymcp-server:gpu-latest
+    container_name: teymcp-server-gpu
+    restart: unless-stopped
+    # GPU 配置 - 启用 NVIDIA GPU 支持
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all  # 使用所有 GPU，也可以指定数量如 count: 1
+              capabilities: [gpu, compute, utility]
+    # 端口映射 - 避免冲突
+    ports:
+      - "1215:8080"  # TeyMCP-Server 主服务端口（外部1215映射到容器内8080）
+      - "1216:1216"  # 预留给 Ollama 或其他 GPU 服务
+    # 环境变量配置
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - TZ=Asia/Shanghai
+    env_file:
+      - ./config/.env
+    # 卷挂载
+    volumes:
+      # 配置文件
+      - ./config:/app/config:ro
+      # 数据持久化
+      - teymcp-logs:/app/data/logs
+      - teymcp-metrics:/app/data/metrics
+      # GPU 缓存目录（用于模型缓存）
+      - gpu-cache:/root/.cache
+    networks:
+      - teymcp-network
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # GPU 初始化需要更多时间
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    # 设备和权限
+    privileged: false  # 安全起见不使用特权模式
+    # 依赖的额外 GPU 服务（可选）
+    # depends_on:
+    #   - ollama
+
+  # Ollama GPU 服务（可选 - 本地 LLM 推理）
+  # 取消注释以启用 Ollama
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama-gpu
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
+  #   ports:
+  #     - "11434:11434"  # Ollama API 端口
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   networks:
+  #     - teymcp-network
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=all
+
+networks:
+  teymcp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  teymcp-logs:
+    driver: local
+  teymcp-metrics:
+    driver: local
+  gpu-cache:
+    driver: local
+  # ollama-data:
+  #   driver: local

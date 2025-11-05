@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 文档
+docs/
+*.md
+!README.md
+
+# 测试
+tests/
+.pytest_cache/
+.coverage
+
+# 日志和数据
+data/logs/*.log
+data/metrics/*.json
+*.log
+
+# 配置
+config/.env
+.env
+
+# 临时文件
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 其他
+scripts/
+k8s/
+*.tar.gz
+*.zip

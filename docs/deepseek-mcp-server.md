@@ -1,0 +1,106 @@
+deepseek-mcp-server
+0.2.1 • Public • Published 9 months ago
+DeepSeek MCP Server
+A Model Context Protocol (MCP) server for the DeepSeek API, allowing seamless integration of DeepSeek's powerful language models with MCP-compatible applications like Claude Desktop.
+
+DeepSeek Server MCP server Smithery Badge
+
+Installation
+Installing via Smithery
+To install DeepSeek MCP Server for Claude Desktop automatically via Smithery:
+
+npx -y @smithery/cli install @dmontgomery40/deepseek-mcp-server --client claude
+Manual Installation
+npm install -g deepseek-mcp-server
+Usage with Claude Desktop
+Add this to your claude_desktop_config.json:
+
+{
+  "mcpServers": {
+    "deepseek": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "deepseek-mcp-server"
+      ],
+      "env": {
+        "DEEPSEEK_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+Features
+Note: The server intelligently handles these natural language requests by mapping them to appropriate configuration changes. You can also query the current settings and available models:
+
+User: "What models are available?"
+Response: Shows list of available models and their capabilities via the models resource.
+User: "What configuration options do I have?"
+Response: Lists all available configuration options via the model-config resource.
+User: "What is the current temperature setting?"
+Response: Displays the current temperature setting.
+User: "Start a multi-turn conversation. With the following settings: model: 'deepseek-chat', make it not too creative, and allow 8000 tokens."
+Response: Starts a multi-turn conversation with the specified settings.
+Automatic Model Fallback if R1 is down
+If the primary model (R1) is down (called deepseek-reasoner in the server), the server will automatically attempt to try with v3 (called deepseek-chat in the server)
+Note: You can switch back and forth anytime as well, by just giving your prompt and saying "use deepseek-reasoner" or "use deepseek-chat"
+
+V3 is recommended for general purpose use, while R1 is recommended for more technical and complex queries, primarily due to speed and token useage
+Resource discovery for available models and configurations:
+Custom model selection
+Temperature control (0.0 - 2.0)
+Max tokens limit
+Top P sampling (0.0 - 1.0)
+Presence penalty (-2.0 - 2.0)
+Frequency penalty (-2.0 - 2.0)
+Enhanced Conversation Features
+Multi-turn conversation support:
+
+Maintains complete message history and context across exchanges
+Preserves configuration settings throughout the conversation
+Handles complex dialogue flows and follow-up chains automatically
+This feature is particularly valuable for two key use cases:
+
+Training & Fine-tuning: Since DeepSeek is open source, many users are training their own versions. The multi-turn support provides properly formatted conversation data that's essential for training high-quality dialogue models.
+
+Complex Interactions: For production use, this helps manage longer conversations where context is crucial:
+
+Multi-step reasoning problems
+Interactive troubleshooting sessions
+Detailed technical discussions
+Any scenario where context from earlier messages impacts later responses
+The implementation handles all context management and message formatting behind the scenes, letting you focus on the actual interaction rather than the technical details of maintaining conversation state.
+
+Testing with MCP Inspector
+You can test the server locally using the MCP Inspector tool:
+
+Build the server:
+
+npm run build
+Run the server with MCP Inspector:
+
+# Make sure to specify the full path to the built server
+npx @modelcontextprotocol/inspector node ./build/index.js
+The inspector will open in your browser and connect to the server via stdio transport. You can:
+
+View available tools
+Test chat completions with different parameters
+Debug server responses
+Monitor server performance
+Note: The server uses DeepSeek's R1 model (deepseek-reasoner) by default, which provides state-of-the-art performance for reasoning and general tasks.
+
+License
+MIT
+
+Readme
+Keywords
+mcpdeepseekaillm
+Package Sidebar
+Install
+npm i deepseek-mcp-server
+
+
+Repository
+github.com/DMontgomery40/deepseek-mcp-server
+
+Homepage
+github.com/DMontgomery40/deepseek-mcp-server#readme

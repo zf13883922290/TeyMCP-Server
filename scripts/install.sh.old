@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# TeyMCP-Server 自动安装脚本
+
+set -e
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e "${GREEN}"
+cat << "LOGO"
+  _____         __  __  ____ ____  
+ |_   _|__ _   _|  \/  |/ ___|  _ \ 
+   | |/ _ \ | | | |\/| | |   | |_) |
+   | |  __/ |_| | |  | | |___|  __/ 
+   |_|\___|\__, |_|  |_|\____|_|    
+           |___/                     
+    ____                            
+   / ___|  ___ _ ____   _____ _ __  
+   \___ \ / _ \ '__\ \ / / _ \ '__| 
+    ___) |  __/ |   \ V /  __/ |    
+   |____/ \___|_|    \_/ \___|_|    
+LOGO
+echo -e "${NC}"
+
+echo -e "${GREEN}TeyMCP-Server 安装向导${NC}"
+echo ""
+
+# 检查Python版本
+echo -e "${YELLOW}[1/6] 检查Python版本...${NC}"
+if command -v python3.11 &> /dev/null; then
+    PYTHON_CMD=python3.11
+elif command -v python3 &> /dev/null; then
+    PYTHON_VERSION=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2)
+    if (( $(echo "$PYTHON_VERSION >= 3.11" | bc -l) )); then
+        PYTHON_CMD=python3
+    else
+        echo -e "${RED}❌ 需要 Python 3.11+，当前版本: $PYTHON_VERSION${NC}"
+        echo "请安装: sudo apt install python3.11 python3.11-venv"
+        exit 1
+    fi
+else
+    echo -e "${RED}❌ 未找到Python，请先安装${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Python版本: $($PYTHON_CMD --version)${NC}"
+
+# 检查Node.js
+echo -e "${YELLOW}[2/6] 检查Node.js...${NC}"
+if command -v node &> /dev/null; then
+    echo -e "${GREEN}✓ Node.js版本: $(node --version)${NC}"
+else
+    echo -e "${YELLOW}⚠️  未找到Node.js，某些MCP服务器可能无法使用${NC}"
+    read -p "是否继续安装? (y/n): " CONTINUE
+    if [ "$CONTINUE" != "y" ]; then
+        echo "安装已取消"
+        exit 0
+    fi
+fi
+
+# 创建虚拟环境
+echo -e "${YELLOW}[3/6] 创建虚拟环境...${NC}"
+if [ -d "venv" ]; then
+    echo -e "${YELLOW}虚拟环境已存在，跳过创建${NC}"
+else
+    $PYTHON_CMD -m venv venv
+    echo -e "${GREEN}✓ 虚拟环境创建成功${NC}"
+fi
+
+# 激活虚拟环境
+source venv/bin/activate
+
+# 升级pip
+echo -e "${YELLOW}[4/6] 升级pip...${NC}"
+pip install --upgrade pip -q
+echo -e "${GREEN}✓ pip已升级${NC}"
+
+# 安装依赖
+echo -e "${YELLOW}[5/6] 安装依赖...${NC}"
+echo "这可能需要几分钟..."
+pip install -r requirements.txt -q
+echo -e "${GREEN}✓ 依赖安装完成${NC}"
+
+# 配置环境变量
+echo -e "${YELLOW}[6/6] 配置环境变量...${NC}"
+if [ -f "config/.env" ]; then
+    echo -e "${YELLOW}配置文件已存在，跳过${NC}"
+else
+    cp config/.env.example config/.env
+    echo -e "${GREEN}✓ 已创建配置文件: config/.env${NC}"
+    echo ""
+    echo -e "${YELLOW}⚠️  请编辑 config/.env 填入你的API密钥:${NC}"
+    echo "   nano config/.env"
+    echo ""
+fi
+
+# 创建数据目录
+mkdir -p data/logs data/metrics
+
+echo ""
+echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                                        ║${NC}"
+echo -e "${GREEN}║         ✅ 安装完成!                    ║${NC}"
+echo -e "${GREEN}║                                        ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${YELLOW}下一步:${NC}"
+echo ""
+echo "1. 配置API密钥:"
+echo -e "   ${GREEN}nano config/.env${NC}"
+echo ""
+echo "2. 启动服务:"
+echo -e "   ${GREEN}bash scripts/start.sh${NC}"
+echo ""
+echo "3. 访问管理面板:"
+echo -e "   ${GREEN}http://localhost:8080${NC}"
+echo ""
+echo -e "${YELLOW}需要帮助?${NC}"
+echo "  - 文档: docs/README.md"
+echo "  - 快速入门: docs/QUICKSTART.md"
+echo "  - GitHub: https://github.com/zf13883922290/TeyMCP-Server"
+echo ""

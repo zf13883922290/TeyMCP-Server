@@ -1,0 +1,36 @@
+# 应用配置
+app:
+  name: TeyMCP-Server
+  version: 1.0.0
+  host: 0.0.0.0
+  port: 1215
+  reload: false
+
+# 日志配置
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "data/logs/teymcp.log"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+
+# Web界面配置
+web:
+  title: "TeyMCP-Server 管理面板"
+  refresh_interval: 5000  # 毫秒
+  max_log_entries: 1000
+
+# 性能配置
+performance:
+  worker_count: 1
+  max_connections: 100
+  timeout: 30  # 秒
+  
+# 安全配置
+security:
+  enable_auth: false
+  api_key_required: false
+  cors_enabled: true
+  cors_origins:
+    - "http://localhost:3000"
+    - "https://example.com"

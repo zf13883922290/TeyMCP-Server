@@ -1,0 +1,415 @@
+containerization-assist-mcp
+TypeScript icon, indicating that this package has built-in type declarations
+1.0.0 • Public • Published 14 days ago
+Containerization Assist MCP Server
+Test Pipeline Version MCP SDK Node Version
+
+An AI-powered containerization assistant that helps you build, scan, and deploy Docker containers through VS Code and other MCP-compatible tools.
+
+Features
+🐳 Docker Integration: Build, scan, and deploy container images
+☸️ Kubernetes Support: Generate manifests and deploy applications
+🤖 AI-Powered: Intelligent Dockerfile generation and optimization
+🧠 Knowledge Enhanced: AI-driven content improvement with security and performance best practices
+🔄 Intelligent Tool Routing: Automatic dependency resolution and execution
+📊 Progress Tracking: Real-time progress updates via MCP notifications
+🔒 Security Scanning: Built-in vulnerability scanning with AI-powered suggestions
+✨ Smart Analysis: Context-aware recommendations
+System Requirements
+Node.js 20+
+Docker or Docker Desktop
+Optional: Trivy (for security scanning features)
+Optional: Kubernetes (for deployment features)
+VS Code Setup
+Add the following to your VS Code settings or create .vscode/mcp.json in your project:
+
+{
+  "servers": {
+    "containerization-assist": {
+      "command": "npx",
+      "args": ["-y", "containerization-assist-mcp", "start"],
+      "env": {
+        "DOCKER_SOCKET": "/var/run/docker.sock",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+Restart VS Code to enable the MCP server in GitHub Copilot.
+
+Windows Users
+For Windows, use the Windows Docker pipe:
+
+"DOCKER_SOCKET": "//./pipe/docker_engine"
+Quick Start
+The easiest way to understand the containerization workflow is through an end-to-end example:
+
+Single-App Containerization Journey
+This MCP server guides you through a complete containerization workflow for a single application. The journey follows this sequence:
+
+Analyze Repository → Understand your application's language, framework, and dependencies
+Generate Dockerfile → Create an optimized, security-hardened container configuration
+Build Image → Compile your application into a Docker image
+Scan Image → Identify security vulnerabilities and get remediation guidance
+Tag Image → Apply appropriate version tags to your image
+Generate K8s Manifests → Create deployment configurations for Kubernetes
+Prepare Cluster → Set up namespace and prerequisites (if needed)
+Deploy → Deploy your application to Kubernetes
+Verify → Confirm deployment health and readiness
+Prerequisites
+Before starting, ensure you have:
+
+Docker: Running Docker daemon with accessible socket (docker ps should work)
+Linux/Mac: /var/run/docker.sock accessible
+Windows: Docker Desktop with //./pipe/docker_engine accessible
+Kubernetes (optional, for deployment features):
+Valid kubeconfig at ~/.kube/config
+Cluster connectivity (kubectl cluster-info should work)
+Appropriate RBAC permissions for deployments, services, namespaces
+Node.js: Version 20 or higher
+MCP Client: VS Code with Copilot, Claude Desktop, or another MCP-compatible client
+Example Workflow with Natural Language
+Once configured in your MCP client (VS Code Copilot, Claude Desktop, etc.), use natural language:
+
+Starting the Journey:
+
+"Analyze my Java application for containerization"
+Building the Container:
+
+"Generate an optimized Dockerfile with security best practices"
+"Build a Docker image tagged myapp:v1.0.0"
+"Scan the image for vulnerabilities"
+Deploying to Kubernetes:
+
+"Generate Kubernetes manifests for this application"
+"Prepare my cluster and deploy to the default namespace"
+"Verify the deployment is healthy"
+Single-Operator Model
+This server is optimized for one engineer containerizing one application at a time. Key characteristics:
+
+Sequential execution: Each tool builds on the results of previous steps
+Fast-fail validation: Clear, actionable error messages if Docker/Kubernetes are unavailable
+Deterministic AI generation: Tools provide reproducible outputs through built-in prompt engineering
+Real-time progress: MCP notifications surface progress updates to clients during long-running operations
+Multi-Module/Monorepo Support
+The server detects and supports monorepo structures with multiple independently deployable services:
+
+Automatic Detection: analyze-repo identifies monorepo patterns (npm workspaces, services/, apps/ directories)
+Automated Multi-Module Generation: generate-dockerfile and generate-k8s-manifests support multi-module workflows
+Conservative Safeguards: Excludes shared libraries and utility folders from containerization
+Multi-Module Workflow Example:
+
+1. "Analyze my monorepo at ./my-monorepo"
+   → Detects 3 modules: api-gateway, user-service, notification-service
+
+2. "Generate Dockerfiles"
+   → Automatically creates Dockerfiles for all 3 modules:
+     - services/api-gateway/Dockerfile
+     - services/user-service/Dockerfile
+     - services/notification-service/Dockerfile
+
+3. "Generate K8s manifests"
+   → Automatically creates manifests for all 3 modules
+
+4. Optional: "Generate Dockerfile for user-service module"
+   → Creates module-specific deployment manifests
+Detection Criteria:
+
+Workspace configurations (npm, yarn, pnpm workspaces, lerna, nx, turborepo, cargo workspace)
+Separate package.json, pom.xml, go.mod, Cargo.toml per service
+Independent entry points and build configs
+EXCLUDES: shared/, common/, lib/, packages/utils directories
+Available Tools
+The server provides 13 MCP tools organized by functionality:
+
+Analysis & Planning
+Tool	Description
+analyze-repo	Analyze repository structure and detect technologies by parsing config files
+Dockerfile Operations
+Tool	Description
+generate-dockerfile	Gather insights from knowledge base and return requirements for Dockerfile creation
+fix-dockerfile	Analyze Dockerfile for issues including organizational policy validation and return knowledge-based fix recommendations
+Image Operations
+Tool	Description
+build-image	Build Docker images from Dockerfiles with security analysis
+scan-image	Scan Docker images for security vulnerabilities with remediation guidance (uses Trivy CLI)
+tag-image	Tag Docker images with version and registry information
+push-image	Push Docker images to a registry
+Kubernetes Operations
+Tool	Description
+generate-k8s-manifests	Gather insights and return requirements for Kubernetes/Helm/ACA/Kustomize manifest creation
+prepare-cluster	Prepare Kubernetes cluster for deployment
+deploy	Deploy applications to Kubernetes clusters
+verify-deploy	Verify Kubernetes deployment status
+Utilities
+Tool	Description
+ops	Operational utilities for ping and server status
+Supported Technologies
+Languages & Frameworks
+Java: Spring Boot, Quarkus, Micronaut (Java 8-21)
+.NET: ASP.NET Core, Blazor (.NET 6.0+)
+Build Systems
+Maven, Gradle (Java)
+dotnet CLI (.NET)
+Configuration
+Environment Variables
+The following environment variables control server behavior:
+
+Variable	Description	Default	Required
+DOCKER_SOCKET	Docker socket path	/var/run/docker.sock (Linux/Mac)
+//./pipe/docker_engine (Windows)	Yes (for Docker features)
+DOCKER_TIMEOUT	Docker operation timeout in milliseconds	60000 (60s)	No
+KUBECONFIG	Path to Kubernetes config file	~/.kube/config	No
+K8S_NAMESPACE	Default Kubernetes namespace	default	No
+LOG_LEVEL	Logging level	info	No
+WORKSPACE_DIR	Working directory for operations	Current directory	No
+MCP_MODE	Enable MCP protocol mode (logs to stderr)	false	No
+MCP_QUIET	Suppress non-essential output in MCP mode	false	No
+CONTAINERIZATION_ASSIST_TOOL_LOGS_DIR_PATH	Directory path for tool execution logs (JSON format)	Disabled	No
+CONTAINERIZATION_ASSIST_POLICY_PATH	Path to policy YAML file (overridden by --config flag)	Auto-discover all policies/	No
+Progress Notifications: Long-running operations (build, deploy, scan-image) emit real-time progress updates via MCP notifications. MCP clients can subscribe to these notifications to display progress to users.
+
+Tool Execution Logging
+Enable detailed logging of all tool executions to JSON files for debugging and auditing:
+
+export CONTAINERIZATION_ASSIST_TOOL_LOGS_DIR_PATH=/path/to/logs
+Log File Format:
+
+Filename: ca-tool-logs-${timestamp}.jsonl
+Example: ca-tool-logs-2025-10-13T14-30-15-123Z.jsonl
+Log Contents:
+
+{
+  "timestamp": "2025-10-13T14:30:15.123Z",
+  "toolName": "analyze-repo",
+  "input": { "path": "/workspace/myapp" },
+  "output": { "language": "typescript", "framework": "express" },
+  "success": true,
+  "durationMs": 245,
+  "error": "Error message if failed",
+  "errorGuidance": {
+    "hint": "Suggested fix",
+    "resolution": "Step-by-step instructions"
+  }
+}
+The logging directory is validated at startup to ensure it's writable.
+
+Policy System
+The policy system enables enforcement of security, quality, and compliance rules through YAML-based policies. Policies use a rule-based system with regex and function matchers to validate Dockerfiles and container configurations.
+
+Default Behavior (No Configuration Needed): By default, all policies in the policies/ directory are automatically discovered and merged:
+
+policies/base-images.yaml - Base image governance (Microsoft Azure Linux recommendation, no :latest tag, deprecated versions, size optimization)
+policies/container-best-practices.yaml - Docker best practices (HEALTHCHECK, multi-stage builds, layer optimization)
+policies/security-baseline.yaml - Essential security rules (root user prevention, registry restrictions, vulnerability scanning)
+This provides comprehensive coverage out-of-the-box.
+
+Policy File Format:
+
+version: '2.0'
+metadata:
+  name: Production Security Policy
+  description: Security and quality rules for production
+  category: security
+
+defaults:
+  enforcement: strict  # Options: strict, advisory, lenient
+  security:
+    nonRootUser: true
+    scanners:
+      required: true
+      tools: ['trivy']
+  registries:
+    allowed:
+      - docker.io
+      - gcr.io
+      - mcr.microsoft.com
+    blocked:
+      - '*localhost*'
+
+rules:
+  - id: block-latest-tag
+    category: quality
+    priority: 80
+    description: Prevent :latest for reproducibility
+    conditions:
+      - kind: regex
+        pattern: 'FROM\s+[^:]+:latest'
+        flags: im
+    actions:
+      block: true
+      message: 'Using :latest tag is not allowed. Specify explicit version tags.'
+
+  - id: block-root-user
+    category: security
+    priority: 95
+    description: Enforce non-root user
+    conditions:
+      - kind: regex
+        pattern: '^USER\s+(root|0)\s*$'
+        flags: m
+    actions:
+      block: true
+      message: 'Running as root user is not allowed.'
+Rule Components:
+
+Conditions:
+
+kind: regex - Match patterns in Dockerfile content
+pattern: Regular expression to match
+flags: Regex flags (i=case-insensitive, m=multiline)
+count_threshold: Minimum matches required (optional)
+kind: function - Built-in function matchers
+hasPattern - Check if pattern exists in content
+fileExists - Check if file exists in context
+largerThan - Check if content/file exceeds size threshold
+hasVulnerabilities - Check vulnerability scan results
+Actions:
+
+block: true - Prevents build/deployment, operation fails
+warn: true - Logs warning, operation continues
+suggest: true - Provides recommendation, informational only
+message: User-facing explanation of the rule violation
+Priority Levels:
+
+90-100: Security rules (highest priority)
+70-89: Quality rules
+50-69: Performance rules
+30-49: Compliance rules
+Enforcement Modes:
+
+strict: All rules enforced, violations block operations
+advisory: Rules evaluated, violations logged but not blocking
+lenient: Minimal enforcement, warnings only
+Example Policies:
+
+The repository includes three production-ready policies:
+
+policies/base-images.yaml - Base image governance (Microsoft Azure Linux recommendation, no :latest tag, deprecated versions)
+policies/security-baseline.yaml - Essential security rules (root user prevention, secrets detection, privileged containers)
+policies/container-best-practices.yaml - Docker best practices (HEALTHCHECK, multi-stage builds, layer optimization)
+For detailed examples and guidance, see Policy Configuration Guide.
+
+Using Policies:
+
+# Validate Dockerfile with built-in validation + organizational policies
+npx containerization-assist fix-dockerfile --path ./Dockerfile
+
+# Use specific policy file for organizational validation
+npx containerization-assist fix-dockerfile \
+  --path ./Dockerfile \
+  --policy-path ./policies/production.yaml
+
+# The fix-dockerfile tool will automatically detect and load policies from the policies/ directory
+# It combines:
+# - Built-in best practices validation (security, performance, compliance)
+# - Custom organizational policy validation (if policies are provided)
+Creating Custom Policies:
+
+See existing policies in policies/ for examples.
+
+Policy Discovery and Merging:
+
+The server automatically discovers and loads all .yaml files in the policies/ directory:
+
+Automatic Discovery: All policies in policies/ are loaded and merged automatically
+Rule Merging: Rules with the same ID are overridden by later policies (alphabetically sorted)
+Default Merging: Later policies override earlier policies' default settings
+Priority Sorting: All rules are sorted by priority (highest first) after merging
+This allows you to organize policies by concern (security, quality, performance) in separate files while maintaining a unified policy enforcement system.
+
+MCP Inspector (Testing)
+npx @modelcontextprotocol/inspector containerization-assist-mcp start
+Troubleshooting
+Docker Connection Issues
+# Check Docker is running
+docker ps
+
+# Check socket permissions (Linux/Mac)
+ls -la /var/run/docker.sock
+
+# For Windows, ensure Docker Desktop is running
+MCP Connection Issues
+# Test with MCP Inspector
+npx @modelcontextprotocol/inspector containerization-assist-mcp start
+
+# Check logs with debug level
+npx -y containerization-assist-mcp start --log-level debug
+Kubernetes Connection Issues
+The server performs fast-fail validation when Kubernetes tools are used. If you encounter Kubernetes errors:
+
+Kubeconfig Not Found
+
+# Check if kubeconfig exists
+ls -la ~/.kube/config
+
+# Verify kubectl can connect
+kubectl cluster-info
+
+# If using cloud providers, update kubeconfig:
+# AWS EKS
+aws eks update-kubeconfig --name <cluster-name> --region <region>
+
+# Google GKE
+gcloud container clusters get-credentials <cluster-name> --zone <zone>
+
+# Azure AKS
+az aks get-credentials --resource-group <rg> --name <cluster-name>
+Connection Timeout or Refused
+
+# Verify cluster is running
+kubectl get nodes
+
+# Check API server address
+kubectl config view
+
+# Test connectivity to API server
+kubectl cluster-info dump
+
+# Verify firewall rules allow connection to API server port (typically 6443)
+Authentication or Authorization Errors
+
+# Check current context and user
+kubectl config current-context
+kubectl config view --minify
+
+# Test permissions
+kubectl auth can-i create deployments --namespace default
+kubectl auth can-i create services --namespace default
+
+# If using cloud providers, refresh credentials:
+# AWS EKS: re-run update-kubeconfig
+# GKE: run gcloud auth login
+# AKS: run az login
+Invalid or Missing Context
+
+# List available contexts
+kubectl config get-contexts
+
+# Set a context
+kubectl config use-context <context-name>
+
+# View current configuration
+kubectl config view
+License
+MIT License - See LICENSE file for details.
+
+Support
+See SUPPORT.md for information on how to get help with this project.
+
+Trademarks
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow Microsoft’s Trademark & Brand Guidelines. Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party’s policies.
+
+Readme
+Keywords
+mcpmodel-context-protocolcontainerizationdockerkubernetesai-assisteddevopsjavaspring-bootmavengradle
+Package Sidebar
+Install
+npm i containerization-assist-mcp
+
+
+Repository
+github.com/azure/containerization-assist
+
+Homepage
+github.com/azure/containerization-assist#readme

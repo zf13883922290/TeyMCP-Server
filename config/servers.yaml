@@ -1,0 +1,997 @@
+# ============================================================
+# TeyMCP-Server 完整生态系统配置
+# 包含官方SDK、官方服务器、社区服务器和自定义服务器
+# ============================================================
+
+# ============================================================
+# 📚 MCP SDK和核心组件说明
+# ============================================================
+
+# 以下是MCP协议的官方SDK实现，不需要在这里配置
+# 它们是开发MCP服务器的底层库，TeyMCP-Server已经使用Python SDK
+#
+# 官方SDK列表:
+# - Python SDK: https://github.com/modelcontextprotocol/python-sdk (✅ 已使用)
+# - TypeScript SDK: https://github.com/modelcontextprotocol/typescript-sdk
+# - C# SDK: https://github.com/modelcontextprotocol/csharp-sdk
+# - Kotlin SDK: https://github.com/modelcontextprotocol/kotlin-sdk
+# - Go SDK: https://github.com/modelcontextprotocol/go-sdk
+# - PHP SDK: https://github.com/modelcontextprotocol/php-sdk
+# - Java SDK: https://github.com/modelcontextprotocol/java-sdk
+# - Swift SDK: https://github.com/modelcontextprotocol/swift-sdk
+# - Ruby SDK: https://github.com/modelcontextprotocol/ruby-sdk
+#
+# MCP Registry: https://github.com/modelcontextprotocol/registry
+# - 社区驱动的MCP服务器注册中心 (类似应用商店)
+# - API: https://registry.modelcontextprotocol.io
+
+# ============================================================
+# 🌟 官方参考MCP服务器 (Reference Servers)
+# ============================================================
+servers:
+  # ─────────────────────────────────────────────────────────
+  # 核心功能服务器
+  # ─────────────────────────────────────────────────────────
+  
+  everything:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-everything"
+    enabled: false  # 仅用于测试所有MCP功能
+    critical: false
+    description: "参考/测试服务器 - 包含prompts、resources、tools的完整示例"
+    
+  fetch:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@smithery/mcp-fetch"
+    enabled: true
+    critical: false
+    description: "Web内容抓取 - Smithery官方版本，稳定可靠"
+    
+  filesystem:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-filesystem"
+      - "/home/sun/TeyMCP-Server"
+    enabled: true
+    critical: false
+    description: "文件系统操作 - 可配置的安全访问控制"
+    
+  git:
+    server_type: stdio
+    command: python
+    args:
+      - "custom_servers/git_server.py"
+    enabled: true
+    critical: false
+    description: "Git仓库工具 - 读取、搜索、操作Git仓库 (使用github服务器代替)"
+    
+  memory:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-memory"
+    enabled: true
+    critical: false
+    description: "基于知识图谱的持久化记忆系统"
+    
+  sequential_thinking:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-sequential-thinking"
+    enabled: true
+    critical: false
+    description: "动态反思式问题解决 - 思维序列"
+    
+  time:
+    server_type: stdio
+    command: python
+    args:
+      - "custom_servers/time_server.py"
+    enabled: true
+    critical: false
+    description: "时间和时区转换"
+
+  # ─────────────────────────────────────────────────────────
+  # 已归档的官方服务器 (可选)
+  # ─────────────────────────────────────────────────────────
+  
+  brave_search:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-brave-search"
+    env:
+      BRAVE_API_KEY: ${BRAVE_API_KEY}
+    enabled: false
+    critical: false
+    description: "Brave搜索 - 网络和本地搜索 (已归档)"
+
+# ============================================================
+# 🏢 官方集成MCP服务器 (Official Integrations)
+# 由各公司为其平台维护的生产就绪MCP服务器
+# ============================================================
+
+  # ─────────────────────────────────────────────────────────
+  # GitHub官方
+  # ─────────────────────────────────────────────────────────
+  
+  github:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-github"
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}
+    enabled: true
+    critical: true
+    description: "GitHub官方MCP - 仓库管理、Issue、PR、搜索"
+    note: "已迁移到 https://github.com/github/github-mcp-server"
+
+  # ─────────────────────────────────────────────────────────
+  # Microsoft官方MCP服务器
+  # 仓库: https://github.com/microsoft/mcp
+  # ─────────────────────────────────────────────────────────
+  
+  microsoft_azure:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@azure/mcp@latest"
+      - "server"
+      - "start"
+    enabled: false
+    critical: false
+    description: "Microsoft Azure官方 - 40+Azure服务集成 (AI、存储、数据库、网络等)"
+    
+  microsoft_azure_ai_foundry:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@microsoft/mcp-server-azure-ai-foundry"
+    env:
+      AZURE_AI_FOUNDRY_KEY: ${AZURE_AI_FOUNDRY_KEY}
+    enabled: false
+    critical: false
+    description: "Azure AI Foundry - 模型、知识、评估工具"
+    
+  microsoft_azure_devops:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@microsoft/mcp-server-azure-devops"
+    env:
+      AZURE_DEVOPS_TOKEN: ${AZURE_DEVOPS_TOKEN}
+      AZURE_DEVOPS_ORG: ${AZURE_DEVOPS_ORG}
+    enabled: false
+    critical: false
+    description: "Azure DevOps - CI/CD任务管理"
+    
+  microsoft_fabric:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@microsoft/mcp-server-fabric"
+    env:
+      FABRIC_TOKEN: ${FABRIC_TOKEN}
+    enabled: false
+    critical: false
+    description: "Microsoft Fabric RTI - 数据查询和分析"
+    
+  microsoft_m365:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@microsoft/mcp-server-m365-agents-toolkit"
+    env:
+      M365_CLIENT_ID: ${M365_CLIENT_ID}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET}
+    enabled: false
+    critical: false
+    description: "Microsoft 365 Agents Toolkit - M365和Copilot集成"
+
+  # ─────────────────────────────────────────────────────────
+  # 其他公司官方MCP
+  # ─────────────────────────────────────────────────────────
+  
+  slack:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-slack"
+    env:
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      SLACK_TEAM_ID: ${SLACK_TEAM_ID}
+    enabled: false
+    critical: false
+    description: "Slack官方 - 频道管理和消息"
+    
+  sentry:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-sentry"
+    env:
+      SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN}
+      SENTRY_ORG: ${SENTRY_ORG}
+    enabled: false
+    critical: false
+    description: "Sentry官方 - 从Sentry.io检索和分析问题"
+    
+  gitlab:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@sekora/gitlab-mcp"
+    env:
+      GITLAB_TOKEN: ${GITLAB_TOKEN}
+    enabled: false
+    critical: false
+    description: "GitLab官方 - 项目管理和API集成"
+
+# ============================================================
+# 👥 社区MCP服务器 (Community Servers)
+# 由社区开发和维护，使用需自行承担风险
+# ============================================================
+
+  # ─────────────────────────────────────────────────────────
+  # 中国本土化MCP
+  # ─────────────────────────────────────────────────────────
+  
+  gitee:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@gitee/mcp-gitee@latest"
+    env:
+      GITEE_API_BASE: "https://gitee.com/api/v5"
+      GITEE_ACCESS_TOKEN: ${GITEE_TOKEN}
+    enabled: true
+    critical: false
+    description: "Gitee官方MCP - 中国版GitHub (官方npm包)"
+    
+  # ─────────────────────────────────────────────────────────
+  # AI和机器学习
+  # ─────────────────────────────────────────────────────────
+  
+  huggingface:
+    server_type: stdio
+    command: python
+    args:
+      - "custom_servers/huggingface_server.py"
+    env:
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN}
+    enabled: true
+    critical: false
+    description: "HuggingFace - 模型、数据集、Spaces搜索 (自定义实现)"
+    
+  deepseek:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "mcp-deepseek"
+    env:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+    enabled: false
+    critical: false
+    description: "DeepSeek官方 - AI模型聊天、流式对话、模型列表、余额查询"
+    
+  # ─────────────────────────────────────────────────────────
+  # 浏览器自动化
+  # ─────────────────────────────────────────────────────────
+  
+  puppeteer:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-puppeteer"
+    env:
+      ALLOW_DANGEROUS: "false"
+    enabled: true
+    critical: false
+    description: "Puppeteer - 浏览器自动化、截图、爬虫"
+    
+  playwright:
+    server_type: stdio
+    command: python
+    args:
+      - "custom_servers/browser_server.py"
+    enabled: true
+    critical: false
+    description: "Playwright - 跨浏览器自动化测试 (使用puppeteer代替)"
+    
+  # ─────────────────────────────────────────────────────────
+  # 数据库
+  # ─────────────────────────────────────────────────────────
+  
+  postgres:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-postgres"
+      - "postgresql://postgres:root123@localhost:5432/ai_sales"
+    enabled: true
+    critical: false
+    description: "PostgreSQL - ai_sales 数据库访问"
+    
+  sqlite:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "mcp-sqlite@1.0.7"
+      - "/home/sun/TeyMCP-Server/data/sqlite.db"
+    enabled: true
+    critical: false
+    description: "SQLite - 全面的SQLite交互能力 (mcp-sqlite v1.0.7, 8个工具)"
+    
+  mysql:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@nolimit35/mysql-mcp-server"
+    env:
+      MYSQL_DATASOURCES: "|default|root:root123@localhost:3306/mysql;"
+      MYSQL_DANGER_MODE: "false"
+      LOG_LEVEL: "INFO"
+      LOG_COLORS: "true"
+    enabled: true
+    critical: false
+    description: "MySQL - 官方MCP服务器，支持多连接管理、查询执行计划、危险模式保护"
+    
+  mongodb:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@mongodb/mcp-server-mongodb"
+    env:
+      MONGODB_URI: ${MONGODB_URI}
+    enabled: false
+    critical: false
+    description: "MongoDB - NoSQL数据库"
+    
+  # ─────────────────────────────────────────────────────────
+  # 协作和生产力工具
+  # ─────────────────────────────────────────────────────────
+  
+  notion:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@notionhq/notion-mcp-server"
+    env:
+      NOTION_TOKEN: ${NOTION_TOKEN}
+    enabled: false
+    critical: false
+    description: "Notion官方 - 知识库管理，支持页面、数据库、评论操作"
+    
+  confluence:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@atlassian/mcp-server-confluence"
+    env:
+      CONFLUENCE_URL: ${CONFLUENCE_URL}
+      CONFLUENCE_USERNAME: ${CONFLUENCE_USERNAME}
+      CONFLUENCE_API_TOKEN: ${CONFLUENCE_API_TOKEN}
+    enabled: false
+    critical: false
+    description: "Confluence - 企业知识库"
+    
+  jira:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@answerai/jira-mcp"
+    env:
+      JIRA_API_TOKEN: ${JIRA_API_TOKEN}
+      JIRA_BASE_URL: ${JIRA_BASE_URL}
+      JIRA_USER_EMAIL: ${JIRA_USER_EMAIL}
+    enabled: false
+    critical: false
+    description: "Jira官方 - Issue管理、项目跟踪、关系追踪、优化数据载荷"
+    
+  # ─────────────────────────────────────────────────────────
+  # 设计工具
+  # ─────────────────────────────────────────────────────────
+  
+  figma:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@glips/figma-context-mcp"
+    env:
+      FIGMA_ACCESS_TOKEN: ${FIGMA_ACCESS_TOKEN}
+    enabled: false
+    critical: false
+    description: "Figma - 设计文件访问和导出"
+    
+  # ─────────────────────────────────────────────────────────
+  # 开发工具
+  # ─────────────────────────────────────────────────────────
+  
+  magic_mcp:
+    server_type: stdio
+    command: python
+    args:
+      - "custom_servers/codegen_server.py"
+    enabled: true
+    critical: false
+    description: "Magic MCP - AI代码生成和自动编程 (自定义实现)"
+    
+  cursor_mcp_installer:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@cursor/mcp-installer"
+    enabled: false
+    critical: false
+    description: "Cursor MCP安装器 - 在Cursor IDE中安装MCP"
+    
+  # ─────────────────────────────────────────────────────────
+  # 工作流自动化
+  # ─────────────────────────────────────────────────────────
+  
+  n8n:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@leonardsellem/n8n-mcp-server"
+    env:
+      N8N_API_URL: ${N8N_API_URL}
+      N8N_API_KEY: ${N8N_API_KEY}
+      N8N_WEBHOOK_USERNAME: ${N8N_WEBHOOK_USERNAME}
+      N8N_WEBHOOK_PASSWORD: ${N8N_WEBHOOK_PASSWORD}
+    enabled: false
+    critical: false
+    description: "n8n官方 - 工作流自动化、执行管理、Webhook支持"
+    
+  zapier:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@zapier/mcp-server-zapier"
+    env:
+      ZAPIER_API_KEY: ${ZAPIER_API_KEY}
+    enabled: false
+    critical: false
+    description: "Zapier - 连接8000+应用"
+    
+  # ─────────────────────────────────────────────────────────
+  # 云服务和基础设施
+  # ─────────────────────────────────────────────────────────
+  
+  aws:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@aws/mcp-server-aws"
+    env:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+    enabled: false
+    critical: false
+    description: "AWS - Amazon Web Services集成"
+    
+  google_cloud:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@google-cloud/mcp-server-gcp"
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+    enabled: false
+    critical: false
+    description: "Google Cloud Platform - GCP服务"
+    
+  # ─────────────────────────────────────────────────────────
+  # AI助手平台
+  # ─────────────────────────────────────────────────────────
+  
+  anything_llm:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@mintplex-labs/anything-llm"
+    enabled: false
+    critical: false
+    description: "AnythingLLM - 全功能AI助手平台"
+    
+  context7:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@upstash/context7"
+    env:
+      UPSTASH_REDIS_URL: ${UPSTASH_REDIS_URL}
+      UPSTASH_REDIS_TOKEN: ${UPSTASH_REDIS_TOKEN}
+    enabled: false
+    critical: false
+    description: "Context7 - Upstash上下文管理"
+
+# ============================================================
+# 🔨 自定义MCP服务器
+# ============================================================
+
+  # ─────────────────────────────────────────────────────────
+  # 文件和代码自动化
+  # ─────────────────────────────────────────────────────────
+  
+  local_automation:
+    server_type: stdio
+    command: python
+    args:
+      - "/home/sun/TeyMCP-Server/custom_servers/automation_server.py"
+    enabled: true
+    critical: false
+    description: |
+      本地自动化服务器 - 6个工具:
+      1. create_file - 创建文件和目录
+      2. compress_files - 压缩zip/tar.gz
+      3. generate_code - 代码模板生成
+      4. batch_rename - 批量重命名
+      5. create_project - 创建项目结构
+      6. remote_edit - SSH远程编辑
+    
+  # ─────────────────────────────────────────────────────────
+  # 媒体生成
+  # ─────────────────────────────────────────────────────────
+  
+  media_generator:
+    server_type: stdio
+    command: python
+    args:
+      - "/home/sun/TeyMCP-Server/custom_servers/media_server.py"
+    env:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      STABILITY_API_KEY: ${STABILITY_API_KEY}
+    enabled: true
+    critical: false
+    description: |
+      媒体生成服务器 - 6个工具:
+      1. generate_image_dalle - DALL-E生成
+      2. generate_image_sd - Stable Diffusion生成
+      3. edit_image - 图片编辑
+      4. convert_image - 格式转换
+      5. generate_video - 视频生成
+      6. add_watermark - 水印
+    
+  # ─────────────────────────────────────────────────────────
+  # 自定义开发模板服务器 (基于官方SDK)
+  # ─────────────────────────────────────────────────────────
+  
+  custom_template:
+    server_type: stdio
+    command: python
+    args:
+      - "/home/sun/TeyMCP-Server/custom_servers/template_server.py"
+    enabled: false
+    critical: false
+    description: "自定义MCP服务器模板 - 用于开发新的MCP服务器"
+
+# ============================================================
+# 🧪 测试和开发工具
+# ============================================================
+
+  local_test:
+    server_type: stdio
+    command: python
+    args:
+      - "/home/sun/TeyMCP-Server/custom_servers/local_test_server.py"
+    enabled: false
+    critical: false
+    description: "本地测试服务器"
+
+# ============================================================
+# 🆕 新发现的社区 MCP 服务器 (2025-11-05 扫描)
+# ============================================================
+
+  # ─────────────────────────────────────────────────────────
+  # GitLab 增强选项
+  # ─────────────────────────────────────────────────────────
+  
+  gitlab_dubuqingfeng:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@dubuqingfeng/gitlab-mcp-server@2.0.12"
+    env:
+      GITLAB_TOKEN: ${GITLAB_TOKEN}
+      GITLAB_URL: ${GITLAB_URL}
+    enabled: false
+    critical: false
+    description: "GitLab MCP v2 - AI agents for GitLab, 更强大的 GitLab 集成"
+  
+  # ─────────────────────────────────────────────────────────
+  # HuggingFace 官方和社区实现
+  # ─────────────────────────────────────────────────────────
+  
+  huggingface_official:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@llmindset/hf-mcp-server@0.2.39"
+    env:
+      HF_TOKEN: ${HUGGINGFACE_TOKEN}
+    enabled: false
+    critical: false
+    description: "HuggingFace 官方 MCP - 模型、数据集、Spaces 访问"
+    
+  huggingface_spaces:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@llmindset/mcp-hfspace@0.5.4"
+    env:
+      HF_TOKEN: ${HUGGINGFACE_TOKEN}
+    enabled: false
+    critical: false
+    description: "HuggingFace Spaces 连接器 - Claude Desktop 友好"
+    
+  huggingface_inference:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "huggingface-mcp-server@1.0.26"
+    env:
+      HF_API_KEY: ${HUGGINGFACE_TOKEN}
+    enabled: false
+    critical: false
+    description: "HuggingFace 推理端点 - 自定义配置"
+  
+  # ─────────────────────────────────────────────────────────
+  # 搜索和信息服务
+  # ─────────────────────────────────────────────────────────
+  
+  exa_search:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "exa-mcp-server@3.0.7"
+    env:
+      EXA_API_KEY: ${EXA_API_KEY}
+    enabled: false
+    critical: false
+    description: "Exa 搜索 - 高质量 Web 搜索引擎"
+    
+  tavily_search:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "tavily-mcp@0.2.10"
+    env:
+      TAVILY_API_KEY: ${TAVILY_API_KEY}
+    enabled: false
+    critical: false
+    description: "Tavily 高级搜索 - AI 优化的搜索 API"
+    
+  weather:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@duwenji/weather-mcp-server@2.4.0"
+    env:
+      WEATHER_API_KEY: ${WEATHER_API_KEY}
+    enabled: false
+    critical: false
+    description: "天气信息 - 实时天气数据 for Claude/Cline"
+  
+  # ─────────────────────────────────────────────────────────
+  # Web 抓取和爬虫
+  # ─────────────────────────────────────────────────────────
+  
+  firecrawl:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "firecrawl-mcp@3.5.2"
+    env:
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY}
+    enabled: false
+    critical: false
+    description: "Firecrawl Web Scraping - 智能网页抓取和爬虫"
+  
+  # ─────────────────────────────────────────────────────────
+  # Slack 增强选项
+  # ─────────────────────────────────────────────────────────
+  
+  slack_workspace:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "slack-mcp-server@1.1.26"
+    env:
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      SLACK_TEAM_ID: ${SLACK_TEAM_ID}
+    enabled: false
+    critical: false
+    description: "Slack 工作空间管理 - 完整的 Slack 集成"
+  
+  # ─────────────────────────────────────────────────────────
+  # AI 模型服务
+  # ─────────────────────────────────────────────────────────
+  
+  ollama:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "ollama-mcp-server@1.1.0"
+    env:
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
+    enabled: false
+    critical: false
+    description: "Ollama 本地 LLM - 本地大模型服务集成"
+    
+  deepseek_mcp:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "deepseek-mcp-server@0.2.1"
+    env:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+    enabled: false
+    critical: false
+    description: "DeepSeek MCP - DeepSeek 高级 LLM 服务"
+  
+  # ─────────────────────────────────────────────────────────
+  # 数据库 - 新增选项
+  # ─────────────────────────────────────────────────────────
+  
+  mongodb_atlas:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "mongodb-atlas-mcp-server@1.6.0"
+    env:
+      MONGODB_ATLAS_PUBLIC_KEY: ${MONGODB_ATLAS_PUBLIC_KEY}
+      MONGODB_ATLAS_PRIVATE_KEY: ${MONGODB_ATLAS_PRIVATE_KEY}
+      MONGODB_ATLAS_PROJECT_ID: ${MONGODB_ATLAS_PROJECT_ID}
+    enabled: false
+    critical: false
+    description: "MongoDB Atlas - 云端 MongoDB 服务"
+    
+  mysql_v1:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "mysql-mcp-server-v1@1.2.6"
+    env:
+      MYSQL_HOST: ${MYSQL_HOST:-localhost}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    enabled: false
+    critical: false
+    description: "MySQL MCP v1 - 完整的 MySQL 服务器，支持层次系统"
+  
+  # ─────────────────────────────────────────────────────────
+  # 开发工具和管理
+  # ─────────────────────────────────────────────────────────
+  
+  mcp_hub:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "mcp-hub@4.2.1"
+    enabled: false
+    critical: false
+    description: "MCP Hub - MCP 服务器管理器，进程管理和路由"
+    
+  mcp_proxy:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "mcp-proxy@5.10.0"
+    enabled: false
+    critical: false
+    description: "MCP Proxy - SSE 代理，将 stdio 转为 SSE"
+    
+  mcp_remote:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "mcp-remote@0.1.29"
+    enabled: false
+    critical: false
+    description: "MCP Remote - 远程代理，本地客户端连接远程 MCP"
+    
+  mcp_inspector:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/inspector@0.17.2"
+    enabled: false
+    critical: false
+    description: "MCP Inspector - MCP 协议调试和检查工具"
+  
+  # ─────────────────────────────────────────────────────────
+  # 浏览器自动化增强
+  # ─────────────────────────────────────────────────────────
+  
+  playwright_official:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@playwright/mcp@0.0.45"
+    env:
+      ALLOW_DANGEROUS: "false"
+    enabled: false
+    critical: false
+    description: "Playwright 官方 MCP - 浏览器自动化工具"
+  
+  # ─────────────────────────────────────────────────────────
+  # Microsoft 生态
+  # ─────────────────────────────────────────────────────────
+  
+  microsoft_m365_toolkit:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@microsoft/m365agentstoolkit-mcp"
+    env:
+      M365_CLIENT_ID: ${M365_CLIENT_ID}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET}
+      M365_TENANT_ID: ${M365_TENANT_ID}
+    enabled: false
+    critical: false
+    description: "Microsoft 365 Agents Toolkit - M365 完整工具包"
+    
+  ms365_softeria:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@softeria/ms-365-mcp-server@0.22.1"
+    env:
+      MS365_OAUTH_TOKEN: ${MS365_OAUTH_TOKEN}
+    enabled: false
+    critical: false
+    description: "MS 365 MCP - Outlook, Calendar, OneDrive 集成"
+  
+  # ─────────────────────────────────────────────────────────
+  # 文档和知识管理
+  # ─────────────────────────────────────────────────────────
+  
+  context7_upstash:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@upstash/context7-mcp@1.0.26"
+    env:
+      UPSTASH_REDIS_URL: ${UPSTASH_REDIS_URL}
+      UPSTASH_REDIS_TOKEN: ${UPSTASH_REDIS_TOKEN}
+    enabled: false
+    critical: false
+    description: "Context7 Upstash - 库文档上下文管理"
+    
+  brief:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "@briefhq/mcp-server@1.7.0"
+    env:
+      BRIEF_API_KEY: ${BRIEF_API_KEY}
+    enabled: false
+    critical: false
+    description: "Brief - 连接 Cursor/Claude 到 Brief 组织"
+  
+  # ─────────────────────────────────────────────────────────
+  # 容器化和开发辅助
+  # ─────────────────────────────────────────────────────────
+  
+  containerization_assist:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "containerization-assist-mcp@1.0.0"
+    enabled: false
+    critical: false
+    description: "容器化助手 - AI 驱动的 Docker/K8s 工作流"
+  
+  # ─────────────────────────────────────────────────────────
+  # n8n 工作流集成
+  # ─────────────────────────────────────────────────────────
+  
+  n8n_mcp_client:
+    server_type: stdio
+    command: /home/sun/TeyMCP-Server/.local/bin/npx
+    args:
+      - "-y"
+      - "n8n-nodes-mcp-client@0.2.12"
+    enabled: false
+    critical: false
+    description: "n8n MCP Client - n8n 的自定义 MCP 客户端节点"
+
+# ============================================================
+# 📝 配置说明
+# ============================================================
+
+# ✅ 兼容性保证:
+# 1. 所有服务器使用stdio方式,与TeyMCP-Server完全兼容
+# 2. Python SDK已集成在TeyMCP-Server中
+# 3. npm包通过npx自动下载,无需手动安装
+# 4. 自定义服务器使用相同的Python SDK开发
+
+# 📊 服务器统计:
+# - 官方参考服务器: 7个
+# - 官方集成服务器: 10个 (GitHub, Microsoft, Slack等)
+# - 社区服务器: 45+个 (包含新发现的25个)
+# - 自定义服务器: 3个
+# 总计: 65+个MCP服务器 (2025-11-05更新)
+
+# 🔧 使用方式:
+# 1. 根据需要启用服务器 (enabled: true)
+# 2. 在.env中配置相应的API密钥
+# 3. 重启TeyMCP-Server
+
+# ⚠️ 注意事项:
+# - 社区服务器未经测试,使用需自行承担风险
+# - 某些服务器需要付费API密钥
+# - 建议逐步启用,避免一次启用太多服务器
+
+# 🔗 更多资源:
+# - MCP官方文档: https://modelcontextprotocol.io
+# - MCP Registry: https://registry.modelcontextprotocol.io
+# - 官方服务器列表: https://github.com/modelcontextprotocol/servers
+# - Awesome MCP: https://github.com/wong2/awesome-mcp-servers

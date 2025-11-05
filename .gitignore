@@ -1,0 +1,110 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.coverage
+.venv/
+
+# 环境变量和敏感配置
+.env
+*.env
+!.env.example
+config/.env
+config/.env.*
+config/*.backup*
+
+# 数据文件
+data/
+data/logs/*.log
+data/metrics/*.json
+*.db
+*.sqlite
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
+*.backup
+*_backup_*
+
+# Docker 和容器相关
+*.crdownload
+*.zip
+*.tar.gz
+*.tar
+docker-compose.override.yml
+
+# 大文件和二进制文件
+*.exe
+*.bin
+*.phar
+node_modules/
+.local/
+mcp_sdks/
+
+# 备份文件
+*.backup
+*.backup_*
+*_backup_*
+config/*.backup*
+config/.env.backup*
+
+# 部署和安装日志
+install.log
+deploy.log
+test.log
+
+# 用户特定配置和中间文件
+部署.txt
+*密码*
+*password*
+*secret*
+聚合MCP-server计划方案逻辑.md
+项目完整施工树状结构图.md
+🎯*.md
+
+# 中间版本脚本 (只保留最终版本)
+check_packages.sh
+deploy.sh
+env.sh
+fix_*.sh
+full_system_check.sh
+install.sh
+install_additional_sdks.sh
+quick_add_example_server.sh
+restart.sh
+service.sh
+setup_database*.sh
+start_server.sh
+start.sh
+stop.sh
+test_server.sh
+test_sqlite_servers.sh
+verify*.sh
+view_logs.sh
+create_download_package.sh
+
+# 中间报告文件
+GPU_FILES_LIST.md
+GPU_INTEGRATION_REPORT.md
+GPU_TEST_REPORT.md
