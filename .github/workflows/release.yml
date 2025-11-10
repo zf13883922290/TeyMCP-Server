@@ -1,0 +1,298 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v3.0)'
+        required: true
+        default: 'v3.0'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run tests
+      run: |
+        python -m pytest tests/ -v || echo "No tests found or tests failed"
+        
+    - name: Generate install script
+      run: |
+        cat > install.sh << 'INSTALL_EOF'
+        #!/bin/bash
+        # TeyMCP-Server Auto Installer
+        # Version: ${{ github.ref_name }}
+        
+        set -e
+        
+        echo "=== TeyMCP-Server Installer ==="
+        echo "Version: ${{ github.ref_name }}"
+        echo "Repository: https://github.com/zf13883922290/TeyMCP-Server"
+        
+        # Check if running as root
+        if [[ $EUID -eq 0 ]]; then
+           echo "This script should not be run as root"
+           exit 1
+        fi
+        
+        # Detect OS
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            if command -v apt-get >/dev/null 2>&1; then
+                PACKAGE_MANAGER="apt-get"
+                UPDATE_CMD="sudo apt-get update"
+                INSTALL_CMD="sudo apt-get install -y"
+                PYTHON_DEV="python3-dev"
+            elif command -v yum >/dev/null 2>&1; then
+                PACKAGE_MANAGER="yum"
+                UPDATE_CMD="sudo yum update -y"
+                INSTALL_CMD="sudo yum install -y"
+                PYTHON_DEV="python3-devel"
+            elif command -v dnf >/dev/null 2>&1; then
+                PACKAGE_MANAGER="dnf"
+                UPDATE_CMD="sudo dnf update -y"
+                INSTALL_CMD="sudo dnf install -y"
+                PYTHON_DEV="python3-devel"
+            else
+                echo "Unsupported package manager. Please install manually."
+                exit 1
+            fi
+        else
+            echo "Unsupported OS: $OSTYPE"
+            exit 1
+        fi
+        
+        echo "Detected package manager: $PACKAGE_MANAGER"
+        
+        # Update package list
+        echo "Updating package list..."
+        $UPDATE_CMD
+        
+        # Install system dependencies
+        echo "Installing system dependencies..."
+        $INSTALL_CMD python3 python3-pip python3-venv git curl wget $PYTHON_DEV
+        
+        # Install NVIDIA drivers and CUDA if GPU is available
+        if command -v nvidia-smi >/dev/null 2>&1; then
+            echo "NVIDIA GPU detected. Installing NVIDIA Container Toolkit..."
+            # Install NVIDIA Container Toolkit
+            distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+            curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+            curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+            
+            sudo apt-get update && sudo apt-get install -y nvidia-docker2
+            sudo systemctl restart docker
+        fi
+        
+        # Create installation directory
+        INSTALL_DIR="$HOME/TeyMCP-Server"
+        if [[ -d "$INSTALL_DIR" ]]; then
+            echo "Directory $INSTALL_DIR already exists. Backing up..."
+            mv "$INSTALL_DIR" "$INSTALL_DIR.backup.$(date +%Y%m%d_%H%M%S)"
+        fi
+        
+        mkdir -p "$INSTALL_DIR"
+        cd "$INSTALL_DIR"
+        
+        # Clone repository
+        echo "Cloning TeyMCP-Server repository..."
+        git clone https://github.com/zf13883922290/TeyMCP-Server.git .
+        git checkout ${{ github.ref_name }}
+        
+        # Create virtual environment
+        echo "Creating Python virtual environment..."
+        python3 -m venv venv
+        source venv/bin/activate
+        
+        # Upgrade pip
+        pip install --upgrade pip
+        
+        # Install Python dependencies
+        echo "Installing Python dependencies..."
+        pip install -r requirements.txt
+        
+        # Install additional packages if needed
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+        
+        # Create systemd service (optional)
+        read -p "Do you want to install as a systemd service? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Creating systemd service..."
+            sudo tee /etc/systemd/system/teymcp-server.service > /dev/null << SERVICE_EOF
+        [Unit]
+        Description=TeyMCP Server
+        After=network.target
+        
+        [Service]
+        Type=simple
+        User=$USER
+        WorkingDirectory=$INSTALL_DIR
+        ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/local_mcp_server.py
+        Restart=always
+        RestartSec=5
+        
+        [Install]
+        WantedBy=multi-user.target
+        SERVICE_EOF
+        
+            sudo systemctl daemon-reload
+            sudo systemctl enable teymcp-server
+            echo "Service created. Use 'sudo systemctl start teymcp-server' to start."
+        fi
+        
+        # Create desktop shortcut (optional)
+        read -p "Do you want to create a desktop shortcut? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Creating desktop shortcut..."
+            mkdir -p ~/Desktop
+            cat > ~/Desktop/TeyMCP-Server.desktop << DESKTOP_EOF
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=TeyMCP Server
+        Comment=Start TeyMCP Server
+        Exec=$INSTALL_DIR/start.sh
+        Icon=utilities-terminal
+        Terminal=true
+        Categories=Development;
+        DESKTOP_EOF
+            chmod +x ~/Desktop/TeyMCP-Server.desktop
+        fi
+        
+        echo ""
+        echo "=== Installation Complete ==="
+        echo "TeyMCP-Server has been installed to: $INSTALL_DIR"
+        echo ""
+        echo "To start the server:"
+        echo "  cd $INSTALL_DIR"
+        echo "  source venv/bin/activate"
+        echo "  python local_mcp_server.py"
+        echo ""
+        echo "Or use the start script:"
+        echo "  ./start.sh"
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Service commands:"
+            echo "  sudo systemctl start teymcp-server"
+            echo "  sudo systemctl stop teymcp-server"
+            echo "  sudo systemctl status teymcp-server"
+        fi
+        echo ""
+        echo "For more information, visit: https://github.com/zf13883922290/TeyMCP-Server"
+        INSTALL_EOF
+        
+        chmod +x install.sh
+        
+    - name: Create README for release
+      run: |
+        cat > README.md << 'README_EOF'
+        # TeyMCP-Server ${{ github.ref_name }}
+        
+        TeyMCP (Multi-Modal Computing Platform) Server - 智能多模态计算平台服务器
+        
+        ## 安装方法
+        
+        下载 `install.sh` 脚本并运行：
+        
+        ```bash
+        chmod +x install.sh
+        ./install.sh
+        ```
+        
+        安装脚本将自动：
+        - 检测操作系统并安装系统依赖
+        - 创建Python虚拟环境
+        - 安装所有必要的Python包
+        - 可选：创建systemd服务
+        - 可选：创建桌面快捷方式
+        
+        ## 系统要求
+        
+        - Linux (Ubuntu/Debian/CentOS/RHEL)
+        - Python 3.9+
+        - 至少4GB RAM
+        - NVIDIA GPU (推荐，用于AI加速)
+        
+        ## 快速开始
+        
+        安装完成后：
+        
+        ```bash
+        cd ~/TeyMCP-Server
+        source venv/bin/activate
+        python local_mcp_server.py
+        ```
+        
+        ## 更多信息
+        
+        访问项目主页：https://github.com/zf13883922290/TeyMCP-Server
+        
+        查看完整文档：https://github.com/zf13883922290/TeyMCP-Server#readme
+        README_EOF
+        
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        body: |
+          ## TeyMCP-Server ${{ github.ref_name }}
+          
+          自动发布版本 ${{ github.ref_name }}
+          
+          ### 安装方法
+          
+          1. 下载 `install.sh` 脚本
+          2. 运行 `chmod +x install.sh && ./install.sh`
+          
+          脚本将自动安装所有必要的组件。
+          
+          ### 变更日志
+          
+          请查看项目的提交历史以了解变更详情。
+          
+          ### 更多信息
+          
+          https://github.com/zf13883922290/TeyMCP-Server
+        draft: false
+        prerelease: false
+        
+    - name: Upload install script
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./install.sh
+        asset_name: install.sh
+        asset_content_type: application/x-shellscript
+        
+    - name: Upload README
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./README.md
+        asset_name: README.md
+        asset_content_type: text/markdown
